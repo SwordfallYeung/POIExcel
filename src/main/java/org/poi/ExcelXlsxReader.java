@@ -20,10 +20,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @author y15079
+ * @author y
  * @create 2018-01-18 14:28
  * @desc POI读取excel有两种模式，一种是用户模式，一种是事件驱动模式
- * 采用cvs模式（事件模式）解决XLSX文件，可以有效解决用户模式内存溢出的问题，
+ * 采用SAX事件驱动模式解决XLSX文件，可以有效解决用户模式内存溢出的问题，
  * 该模式是POI官方推荐的读取大数据的模式，
  * 在用户模式下，数据量较大，Sheet较多，或者是有很多无用的空行的情况下，容易出现内存溢出
  * <p>
@@ -149,10 +149,10 @@ public class ExcelXlsxReader extends DefaultHandler {
 			InputStream sheet = sheets.next(); //sheets.next()和sheets.getSheetName()不能换位置，否则sheetName报错
 			sheetName = sheets.getSheetName();
 			InputSource sheetSource = new InputSource(sheet);
-			parser.parse(sheetSource); //解析excel的每条记录，在这个过程中curRow会自增，并且startElement()、characters()、endElement()这三个函数会依次执行
+			parser.parse(sheetSource); //解析excel的每条记录，在这个过程中startElement()、characters()、endElement()这三个函数会依次执行
 			sheet.close();
 		}
-		return totalRows; //不需要首行，首行为列名
+		return totalRows; //返回该excel文件的总行数，不包括首列和空行
 	}
 
 	/**
@@ -194,7 +194,9 @@ public class ExcelXlsxReader extends DefaultHandler {
 
 	/**
 	 * 第二个执行
-	 *
+	 * 得到单元格对应的索引值或是内容值
+	 * 如果单元格类型是字符串、INLINESTR、数字、日期，lastIndex则是索引值
+	 * 如果单元格类型是布尔值、错误、公式，lastIndex则是内容值
 	 * @param ch
 	 * @param start
 	 * @param length
@@ -202,7 +204,6 @@ public class ExcelXlsxReader extends DefaultHandler {
 	 */
 	@Override
 	public void characters(char[] ch, int start, int length) throws SAXException {
-		//得到单元格内容的索引值
 		lastIndex += new String(ch, start, length);
 	}
 
@@ -261,7 +262,7 @@ public class ExcelXlsxReader extends DefaultHandler {
 					}
 				}
 
-				if (flag&&curRow!=1){ //该行不为空行且该行不是第一行，发送
+				if (flag&&curRow!=1){ //该行不为空行且该行不是第一行，则发送（第一行为列名，不需要）
 					ExcelReaderUtil.sendRows(filePath, sheetName, sheetIndex, curRow, cellList);
 					totalRows++;
 				}
@@ -321,7 +322,6 @@ public class ExcelXlsxReader extends DefaultHandler {
 
 	/**
 	 * 对解析出来的数据进行类型处理
-	 *
 	 * @param value   单元格的值，
 	 *                value代表解析：BOOL的为0或1， ERROR的为内容值，FORMULA的为内容值，INLINESTR的为索引值需转换为内容值，
 	 *                SSTINDEX的为索引值需转换为内容值， NUMBER为内容值，DATE为内容值
@@ -332,14 +332,14 @@ public class ExcelXlsxReader extends DefaultHandler {
 	public String getDataValue(String value, String thisStr) {
 		switch (nextDataType) {
 			// 这几个的顺序不能随便交换，交换了很可能会导致数据错误
-			case BOOL:
+			case BOOL: //布尔值
 				char first = value.charAt(0);
 				thisStr = first == '0' ? "FALSE" : "TRUE";
 				break;
-			case ERROR:
+			case ERROR: //错误
 				thisStr = "\"ERROR:" + value.toString() + '"';
 				break;
-			case FORMULA:
+			case FORMULA: //公式
 				thisStr = '"' + value.toString() + '"';
 				break;
 			case INLINESTR:
@@ -347,7 +347,7 @@ public class ExcelXlsxReader extends DefaultHandler {
 				thisStr = rtsi.toString();
 				rtsi = null;
 				break;
-			case SSTINDEX:
+			case SSTINDEX: //字符串
 				String sstIndex = value.toString();
 				try {
 					int idx = Integer.parseInt(sstIndex);
@@ -358,7 +358,7 @@ public class ExcelXlsxReader extends DefaultHandler {
 					thisStr = value.toString();
 				}
 				break;
-			case NUMBER:
+			case NUMBER: //数字
 				if (formatString != null) {
 					thisStr = formatter.formatRawCellContents(Double.parseDouble(value), formatIndex, formatString).trim();
 				} else {
@@ -366,9 +366,9 @@ public class ExcelXlsxReader extends DefaultHandler {
 				}
 				thisStr = thisStr.replace("_", "").trim();
 				break;
-			case DATE:
+			case DATE: //日期
 				thisStr = formatter.formatRawCellContents(Double.parseDouble(value), formatIndex, formatString);
-				// 对日期字符串作特殊处理
+				// 对日期字符串作特殊处理，去掉T
 				thisStr = thisStr.replace("T", " ");
 				break;
 			default:
