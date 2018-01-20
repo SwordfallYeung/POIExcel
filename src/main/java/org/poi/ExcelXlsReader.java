@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @author y15079
+ * @author y
  * @create 2018-01-19 14:18
  * @desc 用于解决.xls2003版本大数据量问题
  **/
@@ -114,7 +114,6 @@ public class ExcelXlsReader implements HSSFListener {
 
 		return totalRows; //返回该excel文件的总行数，不包括首列和空行
 	}
-
 
 	/**
 	 * HSSFListener 监听方法，处理Record
