@@ -112,7 +112,7 @@ public class ExcelXlsReader implements HSSFListener {
 		}
 		factory.processWorkbookEvents(request, fs);
 
-		return totalRows; //不需要首行，首行为列名
+		return totalRows; //返回该excel文件的总行数，不包括首列和空行
 	}
 
 
@@ -268,7 +268,7 @@ public class ExcelXlsReader implements HSSFListener {
 			}
 			lastColumnNumber = -1;
 
-			if (flag&&curRow!=0) { //该行不为空行且该行不是第一行，发送
+			if (flag&&curRow!=0) { //该行不为空行且该行不是第一行，发送（第一行为列名，不需要）
 				ExcelReaderUtil.sendRows(filePath, sheetName, sheetIndex, curRow + 1, cellList); //每行结束时，调用sendRows()方法
 				totalRows++;
 			}
