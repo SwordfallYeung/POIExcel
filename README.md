@@ -15,3 +15,20 @@ endElement()根据startElement()的单元格数字类型和characters()的索引
 POI通过继承HSSFListener类来解决Excel2003文件：<br/>
 解决思路：重写process()，processRecord()两个方法，其中processRecord是核心方法，用于处理sheetName和各种单元格数字类型。<br/>
 
+参考资料：
+
+https://www.cnblogs.com/huangjian2/p/6238237.html
+
+https://www.cnblogs.com/yfrs/p/5689347.html
+
+http://blog.csdn.net/lishengbo/article/details/40711769
+
+https://www.cnblogs.com/wshsdlau/p/5643847.html
+
+http://blog.csdn.net/lipinganq/article/details/78775195
+
+http://blog.csdn.net/lipinganq/article/details/53389501
+
+http://blog.csdn.net/zmx729618/article/details/72639037
+
+http://blog.csdn.net/daiyutage/article/details/53010491
