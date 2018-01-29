@@ -29,7 +29,7 @@ import java.util.List;
  * <p>
  * 用于解决.xlsx2007版本大数据量问题
  **/
-public class ExcelXlsxReader extends DefaultHandler {
+public class ExcelXlsxReaderWithDefaultHandler extends DefaultHandler {
 
 	/**
 	 * 单元格中的数据可能的数据类型
@@ -307,8 +307,8 @@ public class ExcelXlsxReader extends DefaultHandler {
 			XSSFCellStyle style = stylesTable.getStyleAt(styleIndex);
 			formatIndex = style.getDataFormat();
 			formatString = style.getDataFormatString();
-
-			if (formatString.contains("m/d/yy")) {
+			System.out.println(formatString);
+			if (formatString.contains("m/d/yy") || formatString.contains("yyyy/mm/dd")|| formatString.contains("yyyy/m/d")) {
 				nextDataType = CellDataType.DATE;
 				formatString = "yyyy-MM-dd hh:mm:ss";
 			}

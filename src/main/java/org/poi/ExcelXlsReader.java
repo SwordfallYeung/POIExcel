@@ -223,7 +223,7 @@ public class ExcelXlsReader implements HSSFListener {
 				//第二种方式，参照formatNumberDateCell里面的实现方法编写
 				Double valueDouble=((NumberRecord)numrec).getValue();
 				String formatString=formatListener.getFormatString(numrec);
-				if (formatString.contains("m/d/yy")){
+				if (formatString.contains("m/d/yy") || formatString.contains("yyyy/mm/dd") || formatString.contains("yyyy/m/d")){
 					formatString="yyyy-MM-dd hh:mm:ss";
 				}
 				int formatIndex=formatListener.getFormatIndex(numrec);
