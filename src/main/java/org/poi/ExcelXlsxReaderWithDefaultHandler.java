@@ -94,6 +94,12 @@ public class ExcelXlsxReaderWithDefaultHandler extends DefaultHandler {
 	private boolean isTElement;
 
 	/**
+	 * 判断上一单元格是否为文本空单元格
+	 */
+	private boolean endElementFlag = false;
+	private boolean charactersFlag = false;
+
+	/**
 	 * 异常信息，如果为空则表示没有异常
 	 */
 	private String exceptionMessage;
@@ -168,17 +174,24 @@ public class ExcelXlsxReaderWithDefaultHandler extends DefaultHandler {
 	public void startElement(String uri, String localName, String name, Attributes attributes) throws SAXException {
 		//c => 单元格
 		if ("c".equals(name)) {
+
+
 			//前一个单元格的位置
 			if (preRef == null) {
 				preRef = attributes.getValue("r");
 			} else {
-				preRef = ref;
+				//判断前一次是否为文本空字符串，true则表明不是文本空字符串，false表明是文本空字符串跳过把空字符串的位置赋予preRef
+				if (endElementFlag){
+					preRef = ref;
+				}
 			}
 
 			//当前单元格的位置
 			ref = attributes.getValue("r");
 			//设定单元格类型
 			this.setNextDataType(attributes);
+			endElementFlag = false;
+			charactersFlag = false;
 		}
 
 		//当元素为t时
@@ -192,6 +205,8 @@ public class ExcelXlsxReaderWithDefaultHandler extends DefaultHandler {
 		lastIndex = "";
 	}
 
+
+
 	/**
 	 * 第二个执行
 	 * 得到单元格对应的索引值或是内容值
@@ -204,6 +219,7 @@ public class ExcelXlsxReaderWithDefaultHandler extends DefaultHandler {
 	 */
 	@Override
 	public void characters(char[] ch, int start, int length) throws SAXException {
+		charactersFlag = true;
 		lastIndex += new String(ch, start, length);
 	}
 
@@ -217,12 +233,12 @@ public class ExcelXlsxReaderWithDefaultHandler extends DefaultHandler {
 	 */
 	@Override
 	public void endElement(String uri, String localName, String name) throws SAXException {
-
 		//t元素也包含字符串
 		if (isTElement) {//这个程序没经过
 			//将单元格内容加入rowlist中，在这之前先去掉字符串前后的空白符
 			String value = lastIndex.trim();
 			cellList.add(curCol, value);
+			endElementFlag = true;
 			curCol++;
 			isTElement = false;
 			//如果里面某个单元格含有值，则标识该行不为空行
@@ -242,6 +258,7 @@ public class ExcelXlsxReaderWithDefaultHandler extends DefaultHandler {
 			}
 			cellList.add(curCol, value);
 			curCol++;
+			endElementFlag = true;
 			//如果里面某个单元格含有值，则标识该行不为空行
 			if (value != null && !"".equals(value)) {
 				flag = true;
@@ -255,7 +272,13 @@ public class ExcelXlsxReaderWithDefaultHandler extends DefaultHandler {
 				}
 				//补全一行尾部可能缺失的单元格
 				if (maxRef != null) {
-					int len = countNullCell(maxRef, ref);
+					int len = -1;
+					//前一单元格，true则不是文本空字符串，false则是文本空字符串
+					if (charactersFlag){
+						len = countNullCell(maxRef, ref);
+					}else {
+						len = countNullCell(maxRef, preRef);
+					}
 					for (int i = 0; i <= len; i++) {
 						cellList.add(curCol, "");
 						curCol++;
@@ -307,8 +330,7 @@ public class ExcelXlsxReaderWithDefaultHandler extends DefaultHandler {
 			XSSFCellStyle style = stylesTable.getStyleAt(styleIndex);
 			formatIndex = style.getDataFormat();
 			formatString = style.getDataFormatString();
-			System.out.println(formatString);
-			if (formatString.contains("m/d/yy") || formatString.contains("yyyy/mm/dd")|| formatString.contains("yyyy/m/d")) {
+			if (formatString.contains("m/d/yyyy") || formatString.contains("yyyy/mm/dd")|| formatString.contains("yyyy/m/d") ) {
 				nextDataType = CellDataType.DATE;
 				formatString = "yyyy-MM-dd hh:mm:ss";
 			}
@@ -353,6 +375,9 @@ public class ExcelXlsxReaderWithDefaultHandler extends DefaultHandler {
 					int idx = Integer.parseInt(sstIndex);
 					XSSFRichTextString rtss = new XSSFRichTextString(sst.getEntryAt(idx));//根据idx索引值获取内容值
 					thisStr = rtss.toString();
+					System.out.println(thisStr);
+					//有些字符串是文本格式的，但内容却是日期
+
 					rtss = null;
 				} catch (NumberFormatException ex) {
 					thisStr = value.toString();

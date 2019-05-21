@@ -117,6 +117,7 @@ public class ExcelXlsxReaderWithSheetContentsHandler {
 				}else {
 					//数据
 					table.add(row);
+					System.out.println(row);
 				}
 			}
 		}).parse();
