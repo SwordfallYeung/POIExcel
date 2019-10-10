@@ -25,6 +25,11 @@ public class ExcelXlsReader implements HSSFListener {
 	private POIFSFileSystem fs;
 
 	/**
+	 * 把第一行列名的长度作为列的总长
+	 */
+	private int totalColums = 0;
+
+	/**
 	 * 总行数
 	 */
 	private int totalRows=0;
@@ -267,9 +272,19 @@ public class ExcelXlsReader implements HSSFListener {
 			}
 			lastColumnNumber = -1;
 
-			if (flag&&curRow!=0) { //该行不为空行且该行不是第一行，发送（第一行为列名，不需要）
-				ExcelReaderUtil.sendRows(filePath, sheetName, sheetIndex, curRow + 1, cellList); //每行结束时，调用sendRows()方法
-				totalRows++;
+			if (flag) { //该行不为空行且该行不是第一行，发送（第一行为列名，不需要）
+				if (curRow == 0 ){
+					totalColums = cellList.size(); //获取第一行列名的总数
+				}else {
+					//2003版尾部为空单元格的，xls里面是以该行最后一个有值的单元格为结束标记的，尾部空单元格跳过，故需补全
+					if (cellList.size() <= totalColums){ // 其他行如果尾部单元格总数小于totalColums，则补全单元格
+						for (int i = cellList.size(); i < totalColums; i++){
+							cellList.add(i, "");
+						}
+					}
+					ExcelReaderUtil.sendRows(filePath, sheetName, sheetIndex, curRow + 1, cellList); //每行结束时，调用sendRows()方法
+					totalRows++;
+				}
 			}
 			//清空容器
 			cellList.clear();
