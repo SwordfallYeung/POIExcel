@@ -77,7 +77,7 @@ public class ExcelReaderUtil {
 
 	public static void main(String[] args) throws Exception {
 		/*String path="C:\\Users\\y15079\\Desktop\\shenjiangnan\\H_20180208_ASS_PRODUCT_test3.xlsx";*/
-		String path="D:\\H3CIDEA\\POIExcel\\test.xlsx";
+		String path="D:\\Github\\test.xls";
 		/*String path="C:\\Users\\y15079\\Desktop\\shenjiangnan\\TestSample\\1010filesCollection5000100";*/
 		//H_20180111_Base_Date(4)_0420.xlsx
 		/*String path="C:\\Users\\y15079\\Desktop\\shenjiangnan\\TestSample\\REWORK\\H_20180105_Cto_REWORK_1600.xlsx";*/
