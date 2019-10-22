@@ -96,6 +96,7 @@ public class ExcelXlsxReaderWithDefaultHandler extends DefaultHandler {
 	/**
 	 * 判断上一单元格是否为文本空单元格
 	 */
+    private boolean startElementFlag = true;
 	private boolean endElementFlag = false;
 	private boolean charactersFlag = false;
 
@@ -122,7 +123,7 @@ public class ExcelXlsxReaderWithDefaultHandler extends DefaultHandler {
 	private String formatString;
 
 	//定义前一个元素和当前元素的位置，用来计算其中空的单元格数量，如A6和A8等
-	private String preRef = null, ref = null;
+	private String prePreRef = "A", preRef = null, ref = null;
 
 	//定义该文档一行最大的单元格数，用来补全一行最后可能缺失的单元格
 	private String maxRef = null;
@@ -175,12 +176,12 @@ public class ExcelXlsxReaderWithDefaultHandler extends DefaultHandler {
 		//c => 单元格
 		if ("c".equals(name)) {
 
-
 			//前一个单元格的位置
 			if (preRef == null) {
 				preRef = attributes.getValue("r");
+
 			} else {
-				//判断前一次是否为文本空字符串，true则表明不是文本空字符串，false表明是文本空字符串跳过把空字符串的位置赋予preRef
+				//中部文本空单元格标识 ‘endElementFlag’ 判断前一次是否为文本空字符串，true则表明不是文本空字符串，false表明是文本空字符串跳过把空字符串的位置赋予preRef
 				if (endElementFlag){
 					preRef = ref;
 				}
@@ -188,10 +189,18 @@ public class ExcelXlsxReaderWithDefaultHandler extends DefaultHandler {
 
 			//当前单元格的位置
 			ref = attributes.getValue("r");
+            //首部文本空单元格标识 ‘startElementFlag’ 判断前一次，即首部是否为文本空字符串，true则表明不是文本空字符串，false表明是文本空字符串, 且已知当前格，即第二格带“B”标志，则ref赋予preRef
+			if (!startElementFlag && preRef.contains(prePreRef)){
+			    cellList.add(curCol, "");
+                curCol++;
+                prePreRef = preRef;
+			    preRef = ref;
+            }
 			//设定单元格类型
 			this.setNextDataType(attributes);
 			endElementFlag = false;
 			charactersFlag = false;
+            startElementFlag = false;
 		}
 
 		//当元素为t时
@@ -219,6 +228,7 @@ public class ExcelXlsxReaderWithDefaultHandler extends DefaultHandler {
 	 */
 	@Override
 	public void characters(char[] ch, int start, int length) throws SAXException {
+        startElementFlag = true;
 		charactersFlag = true;
 		lastIndex += new String(ch, start, length);
 	}
@@ -255,7 +265,15 @@ public class ExcelXlsxReaderWithDefaultHandler extends DefaultHandler {
 					cellList.add(curCol, "");
 					curCol++;
 				}
-			}
+			} else if (ref.equals(preRef)){ //ref等于preRef，且以B或者C...开头，表明首部为空格
+			    cellList.add(curCol, "");
+			    curCol++;
+                int len = countNullCell(ref, "A");
+                for (int i = 0; i < len; i++) {
+                    cellList.add(curCol, "");
+                    curCol++;
+                }
+            }
 			cellList.add(curCol, value);
 			curCol++;
 			endElementFlag = true;
