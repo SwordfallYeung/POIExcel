@@ -190,12 +190,11 @@ public class ExcelXlsxReaderWithDefaultHandler extends DefaultHandler {
 			//当前单元格的位置
 			ref = attributes.getValue("r");
             //首部文本空单元格标识 ‘startElementFlag’ 判断前一次，即首部是否为文本空字符串，true则表明不是文本空字符串，false表明是文本空字符串, 且已知当前格，即第二格带“B”标志，则ref赋予preRef
-			if (!startElementFlag && preRef.contains(prePreRef)){
-			    cellList.add(curCol, "");
-                curCol++;
-                prePreRef = preRef;
-			    preRef = ref;
-            }
+			if (!startElementFlag && !flag){ //上一个单元格为文本空单元格，执行下面的，使ref=preRef；flag为true表明该单元格之前有数据值，即该单元格不是首部空单元格，则跳过
+				// 这里只有上一个单元格为文本空单元格，且之前的几个单元格都没有值才会执行
+				preRef = ref;
+			}
+
 			//设定单元格类型
 			this.setNextDataType(attributes);
 			endElementFlag = false;
@@ -228,7 +227,7 @@ public class ExcelXlsxReaderWithDefaultHandler extends DefaultHandler {
 	 */
 	@Override
 	public void characters(char[] ch, int start, int length) throws SAXException {
-        startElementFlag = true;
+		startElementFlag = true;
 		charactersFlag = true;
 		lastIndex += new String(ch, start, length);
 	}
@@ -258,6 +257,7 @@ public class ExcelXlsxReaderWithDefaultHandler extends DefaultHandler {
 		} else if ("v".equals(name)) {
 			//v => 单元格的值，如果单元格是字符串，则v标签的值为该字符串在SST中的索引
 			String value = this.getDataValue(lastIndex.trim(), "");//根据索引值获取对应的单元格值
+
 			//补全单元格之间的空单元格
 			if (!ref.equals(preRef)) {
 				int len = countNullCell(ref, preRef);
@@ -312,6 +312,7 @@ public class ExcelXlsxReaderWithDefaultHandler extends DefaultHandler {
 				curRow++;
 				curCol = 0;
 				preRef = null;
+				prePreRef = null;
 				ref = null;
 				flag=false;
 			}
