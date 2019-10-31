@@ -265,11 +265,9 @@ public class ExcelXlsxReaderWithDefaultHandler extends DefaultHandler {
 					cellList.add(curCol, "");
 					curCol++;
 				}
-			} else if (ref.equals(preRef)){ //ref等于preRef，且以B或者C...开头，表明首部为空格
-			    cellList.add(curCol, "");
-			    curCol++;
-                int len = countNullCell(ref, "A");
-                for (int i = 0; i < len; i++) {
+			} else if (ref.equals(preRef) && !ref.startsWith("A")){ //ref等于preRef，且以B或者C...开头，表明首部为空格
+				int len = countNullCell(ref, "A");
+                for (int i = 0; i <= len; i++) {
                     cellList.add(curCol, "");
                     curCol++;
                 }
